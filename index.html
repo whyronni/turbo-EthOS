@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turbo Race Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a;
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%; /* Use full width */
+            height: 100%; /* Use full height */
+            max-width: 500px; /* Limit max width for desktop */
+            max-height: 900px; /* Limit max height for desktop */
+            background-color: #555; /* Changed to a brighter color */
+            border: 8px solid #444;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            border-radius: 20px;
+            overflow: hidden;
+            touch-action: none; /* Disable default touch actions */
+        }
+
+        #game-canvas {
+            background-color: #555; /* Changed to a brighter color */
+            border-radius: 12px;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #score, #game-over-text {
+            text-align: center;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        #game-over-text {
+            font-size: 24px;
+            color: #ff0000;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #restart-button {
+            display: none;
+            padding: 10px 20px;
+            font-family: 'Press+Start+2P', cursive;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #00f, #f0f);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 255, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #restart-button:hover {
+            transform: scale(1.05);
+            box-shadow: 6px 20px rgba(0, 0, 255, 0.7);
+        }
+
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 10px #fff;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 101;
+            text-align: center;
+        }
+
+        #start-button {
+            padding: 10px 20px;
+            font-family: 'Press+Start+2P', cursive;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #0f0, #00f);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #start-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 255, 0, 0.7);
+        }
+
+        #lives-container {
+            display: flex;
+            gap: 5px;
+        }
+
+        .heart {
+            color: red;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        /* Additional background image styles */
+        #left-image, #right-image {
+            position: absolute;
+            top: 0;
+            width: calc((100% - 500px) / 2); /* Fill empty space on the sides */
+            height: 100%;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.9; /* Make the image slightly transparent */
+        }
+
+        #left-image {
+            left: 0;
+            background-image: url('images/logo.jpg'); /* Placeholder for left image */
+        }
+
+        #right-image {
+            right: 0;
+            background-image: url('images/logo.jpg'); /* Placeholder for right image */
+        }
+
+        #whyronni-text {
+            position: absolute;
+            bottom: 20px;
+            left: calc(20px + 10%); /* Adjust position slightly to the right */
+            color: white;
+            opacity: 0.8;
+            font-size: 12px; /* Smaller font size */
+            text-shadow: 2px 2px 4px #000;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    <div id="ui-container">
+        <div id="score">Score EthOS: 0</div>
+        <div id="lives-container">
+            <!-- Hearts will be drawn here -->
+        </div>
+    </div>
+    <div id="message-box">
+        <div id="game-over-text">Game Over</div>
+        <button id="restart-button">Restart</button>
+    </div>
+    
+    <div id="start-screen">
+        <h1 style="text-align:center;">Turbo Race</h1>
+        <p style="text-align:center;">Click the button to start the game.</p>
+        <button id="start-button">Start Game</button>
+    </div>
+</div>
+
+<!-- Add div for images here -->
+<div id="left-image"></div>
+<div id="right-image"></div>
+
+<!-- Add "whyronni" text here -->
+<div id="whyronni-text">
+    whyronni
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/tone@14.7.58/build/Tone.js"></script>
+<script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const gameContainer = document.getElementById('game-container');
+    const scoreElement = document.getElementById('score');
+    const messageBox = document.getElementById('message-box');
+    const gameOverText = document.getElementById('game-over-text');
+    const restartButton = document.getElementById('restart-button');
+    const livesContainer = document.getElementById('lives-container');
+    const startButton = document.getElementById('start-button');
+    const startScreen = document.getElementById('start-screen');
+    const whyronniText = document.getElementById('whyronni-text');
+    const lanePositions = [];
+    
+    // Game state
+    let score = 0;
+    let lives = 3; // Number of lives
+    let isGameOver = false;
+    let isFlashing = false; // Status for flash effect
+    let flashCounter = 0; // Counter for flash duration
+    let targetX = 0; // Target X position for smooth movement
+    let currentLaneIndex = 1; // Default to middle lane
+    let invulnerable = false; // Add invulnerable state variable
+    let baseObstacleSpeed = 2.5; // Changed initial speed to make it brighter and faster
+    let lastCollisionTime = 0; // New variable to track last collision time
+    let isGameRunning = false;
+
+    // Tone.js setup for sound effects
+    const collectSynth = new Tone.Synth({
+        oscillator: { type: "square" },
+        envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.1 }
+    }).toDestination();
+    
+    const crashSynth = new Tone.NoiseSynth({
+        volume: -10,
+        envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 }
+    }).toDestination();
+
+    // Make canvas responsive
+    let containerWidth, containerHeight;
+    const resizeCanvas = () => {
+        containerWidth = gameContainer.clientWidth;
+        containerHeight = gameContainer.clientHeight;
+        canvas.width = containerWidth;
+        canvas.height = containerHeight;
+
+        // Define lane positions based on new canvas width
+        const laneWidth = canvas.width / 3;
+        lanePositions[0] = laneWidth / 2; // Center of lane 1
+        lanePositions[1] = laneWidth * 1.5; // Center of lane 2
+        lanePositions[2] = laneWidth * 2.5; // Center of lane 3
+        
+        // Ensure car starts in the middle lane after resize
+        if (isGameRunning) {
+            car.x = lanePositions[currentLaneIndex];
+            targetX = lanePositions[currentLaneIndex];
+        } else {
+            car.x = lanePositions[1];
+            targetX = lanePositions[1];
+        }
+    };
+    
+
+    // Player car
+    const car = {
+        width: 30,
+        height: 50,
+        x: canvas.width / 2,
+        y: canvas.height - 70,
+        speed: 5,
+        draw() {
+            // Draw the car only if it's not flashing or it's on the correct flash phase
+            if (!isFlashing || flashCounter % 10 < 5) {
+                ctx.fillStyle = '#C0C0C0'; // Car body color
+                ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                
+                // Car roof
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(this.x - this.width / 4, this.y - this.height / 2, this.width / 2, this.height / 2);
+
+                // Front window
+                ctx.fillStyle = '#add8e6'; // Light blue color for window
+                ctx.fillRect(this.x - this.width / 4 + 2, this.y - this.height / 2 + 2, this.width / 2 - 4, this.height / 4 - 2);
+
+                // Wheels
+                ctx.fillStyle = '#000'; // Black color for wheels
+                // Front-left wheel
+                ctx.fillRect(this.x - this.width / 2 - 5, this.y - this.height / 4, 5, 10);
+                // Front-right wheel
+                ctx.fillRect(this.x + this.width / 2, this.y - this.height / 4, 5, 10);
+                // Back-left wheel
+                ctx.fillRect(this.x - this.width / 2 - 5, this.y + this.height / 4 - 10, 5, 10);
+                // Back-right wheel
+                ctx.fillRect(this.x + this.width / 2, this.y + this.height / 4 - 10, 5, 10);
+            }
+        }
+    };
+
+    // Obstacles
+    let obstacles = [];
+    let obstacleSpeed = 2;
+    function createObstacle() {
+        const randomLane = lanePositions[Math.floor(Math.random() * lanePositions.length)];
+        const obs = {
+            width: 60, // Wider wall
+            height: 30,
+            x: randomLane,
+            y: -30,
+            draw() {
+                // Brick wall color
+                ctx.fillStyle = '#B22222'; 
+                ctx.fillRect(this.x - this.width / 2, this.y, this.width, this.height);
+                // Draw a simple brick pattern
+                ctx.strokeStyle = '#800000'; // Darker color for mortar lines
+                ctx.lineWidth = 1;
+                // Horizontal lines
+                ctx.beginPath();
+                ctx.moveTo(this.x - this.width / 2, this.y + this.height / 2);
+                ctx.lineTo(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.stroke();
+                // Vertical lines
+                ctx.beginPath();
+                ctx.moveTo(this.x - this.width / 2 + 15, this.y);
+                ctx.lineTo(this.x - this.width / 2 + 15, this.y + this.height);
+                ctx.moveTo(this.x - this.width / 2 + 45, this.y);
+                ctx.lineTo(this.x - this.width / 2 + 45, this.y + this.height);
+                ctx.stroke();
+            }
+        };
+        obstacles.push(obs);
+    }
+
+    // Points
+    let points = [];
+    
+    function createPoint() {
+        const randomLane = lanePositions[Math.floor(Math.random() * lanePositions.length)];
+        const pnt = {
+            radius: 10,
+            x: randomLane,
+            y: -25,
+            draw() {
+                // Draw a blue circle for the point
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#0000FF'; // Blue color
+                ctx.fill();
+                ctx.closePath();
+            }
+        };
+        points.push(pnt);
+    }
+
+    // Lane lines
+    let laneLines = [];
+    const laneLineWidth = 5;
+    const laneLineHeight = 30;
+    const laneLineGap = 40;
+    const laneLineYOffset = -laneLineHeight;
+    function createLaneLines() {
+        laneLines = [];
+        const lineX1 = canvas.width / 3;
+        const lineX2 = 2 * canvas.width / 3;
+        for (let i = 0; i < 10; i++) {
+            laneLines.push({
+                x: lineX1,
+                y: i * (laneLineHeight + laneLineGap) + laneLineYOffset
+            });
+            laneLines.push({
+                x: lineX2,
+                y: i * (laneLineHeight + laneLineGap) + laneLineYOffset
+            });
+        }
+    }
+
+    function drawLives() {
+        livesContainer.innerHTML = ''; // Clear previous hearts
+        for (let i = 0; i < lives; i++) {
+            const heart = document.createElement('span');
+            heart.classList.add('heart');
+            heart.textContent = '❤️'; // Use a heart emoji
+            livesContainer.appendChild(heart);
+        }
+    }
+    
+    // Draw everything
+    function draw() {
+        if (!isGameRunning) return;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw solid background
+        ctx.fillStyle = '#555';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the stationary translucent EthOS text on the road
+        ctx.font = '30px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; /* Slightly brighter */
+        ctx.fillText('EthOS', canvas.width / 2, canvas.height / 2);
+        
+        // Draw lane lines
+        ctx.fillStyle = '#fff';
+        laneLines.forEach(line => {
+            ctx.fillRect(line.x - laneLineWidth / 2, line.y, laneLineWidth, laneLineHeight);
+        });
+
+        car.draw();
+        obstacles.forEach(obs => obs.draw());
+        points.forEach(pnt => pnt.draw());
+    }
+    
+    // Draw initial screen
+    function drawInitialScreen() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw solid background
+        ctx.fillStyle = '#555';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw initial road scene
+        ctx.fillStyle = '#fff';
+        const lineX1 = canvas.width / 3;
+        const lineX2 = 2 * canvas.width / 3;
+        const initialLineY = -laneLineHeight;
+        for (let i = 0; i < 10; i++) {
+            ctx.fillRect(lineX1 - laneLineWidth / 2, i * (laneLineHeight + laneLineGap) + initialLineY, laneLineWidth, laneLineHeight);
+            ctx.fillRect(lineX2 - laneLineWidth / 2, i * (laneLineHeight + laneLineGap) + initialLineY, laneLineWidth, laneLineHeight);
+        }
+        
+        // Draw stationary EthOS text
+        ctx.font = '30px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillText('EthOS', canvas.width / 2, canvas.height / 2);
+        
+        // Draw player car
+        const carWidth = 30;
+        const carHeight = 50;
+        const carX = lanePositions[1] - carWidth / 2;
+        const carY = canvas.height - 70;
+        
+        ctx.fillStyle = '#C0C0C0';
+        ctx.fillRect(carX, carY - carHeight/2, carWidth, carHeight);
+        ctx.fillStyle = '#808080';
+        ctx.fillRect(carX + carWidth/4, carY - carHeight/2, carWidth/2, carHeight/2);
+        ctx.fillStyle = '#add8e6';
+        ctx.fillRect(carX + carWidth/4 + 2, carY - carHeight/2 + 2, carWidth/2 - 4, carHeight/4 - 2);
+    }
+
+    // Update game state
+    function update(currentTime) {
+        if (!isGameRunning || isGameOver) return;
+        
+        // Smooth movement logic
+        if (car.x !== targetX) {
+            const dx = targetX - car.x;
+            car.x += dx * 0.1; // Smoothly move towards the target
+            if (Math.abs(dx) < 1) { // Snap to target when close enough
+                car.x = targetX;
+            }
+        }
+        
+        // Handle flashing effect duration
+        if (isFlashing) {
+            flashCounter++;
+            if (flashCounter > 40) { // 40 frames = ~0.66 seconds at 60fps
+                isFlashing = false;
+                flashCounter = 0;
+            }
+        }
+
+        // Move lane lines
+        laneLines.forEach(line => {
+            line.y += obstacleSpeed;
+            if (line.y > canvas.height) {
+                line.y = -laneLineHeight - laneLineGap;
+            }
+        });
+
+        // Move obstacles
+        obstacles.forEach(obs => {
+            obs.y += obstacleSpeed;
+        });
+
+        // Move points
+        points.forEach(pnt => {
+            pnt.y += obstacleSpeed;
+        });
+
+        // Remove off-screen obstacles and points
+        obstacles = obstacles.filter(obs => obs.y < canvas.height);
+        points = points.filter(pnt => pnt.y < canvas.height);
+        
+        // Check for collisions
+        let newObstacles = [];
+        obstacles.forEach(obs => {
+            if (
+                car.x - car.width / 2 < obs.x + obs.width / 2 &&
+                car.x + car.width / 2 > obs.x - obs.width / 2 &&
+                car.y - car.height / 2 < obs.y + obs.height &&
+                car.y + car.height / 2 > obs.y
+            ) {
+                // Only register a collision if enough time has passed since the last one
+                if (currentTime - lastCollisionTime > 500) {
+                    lives--;
+                    drawLives();
+                    isFlashing = true;
+                    flashCounter = 0;
+                    crashSynth.triggerAttackRelease("16n"); // Play crash sound
+                    lastCollisionTime = currentTime; // Update the last collision time
+                }
+                if (lives <= 0) {
+                    endGame();
+                }
+            } else {
+                newObstacles.push(obs);
+            }
+        });
+        obstacles = newObstacles;
+
+        // Check for point collection
+        let newPoints = [];
+        points.forEach(pnt => {
+            // Check for collision with point using bounding box
+            if (
+                car.x - car.width / 2 < pnt.x + pnt.radius &&
+                car.x + car.width / 2 > pnt.x - pnt.radius &&
+                car.y - car.height / 2 < pnt.y + pnt.radius &&
+                car.y + car.height / 2 > pnt.y - pnt.radius
+            ) {
+                score += 10;
+                scoreElement.textContent = `Score EthOS: ${score}`;
+                collectSynth.triggerAttackRelease("C5", "8n"); // Play collect sound
+            } else {
+                newPoints.push(pnt);
+            }
+        });
+        points = newPoints;
+
+
+        // Calculate obstacle speed based on score for smoother progression
+        obstacleSpeed = baseObstacleSpeed + (Math.floor(score / 100) * 0.5);
+    }
+
+    // Game loop
+    let lastObstacleTime = 0;
+    let lastPointTime = 0;
+    const obstacleInterval = 2000;
+    const pointInterval = 5000;
+    function gameLoop(currentTime) {
+        if (!isGameOver) {
+            if (currentTime - lastObstacleTime > obstacleInterval / obstacleSpeed) {
+                createObstacle();
+                lastObstacleTime = currentTime;
+            }
+            if (currentTime - lastPointTime > pointInterval / obstacleSpeed) {
+                createPoint();
+                lastPointTime = currentTime;
+            }
+            update(currentTime);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    // Start game
+    function startGame() {
+        isGameRunning = true;
+        startScreen.style.display = 'none';
+        whyronniText.style.display = 'block';
+        score = 0;
+        lives = 3;
+        isGameOver = false;
+        obstacles = [];
+        points = [];
+        obstacleSpeed = baseObstacleSpeed;
+        scoreElement.textContent = `Score EthOS: ${score}`;
+        messageBox.style.display = 'none';
+        gameOverText.style.display = 'none';
+        restartButton.style.display = 'none';
+        isFlashing = false;
+        flashCounter = 0;
+        lastCollisionTime = 0;
+        
+        createLaneLines();
+        car.x = lanePositions[1]; // Start in the middle lane
+        targetX = lanePositions[1];
+        car.y = canvas.height - 70;
+        drawLives();
+        
+        // Ensure Tone.js is running before starting game loop
+        Tone.start().then(() => {
+            requestAnimationFrame(gameLoop);
+        });
+    }
+
+    // End game
+    function endGame() {
+        isGameOver = true;
+        isGameRunning = false;
+        messageBox.style.display = 'flex';
+        gameOverText.style.display = 'block';
+        restartButton.style.display = 'block';
+    }
+    
+    // Touch and mouse control for car
+    function handleInput(e) {
+        e.preventDefault();
+        if (!isGameRunning || isGameOver) return;
+        
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const rect = canvas.getBoundingClientRect();
+        const touchX = clientX - rect.left;
+        
+        const currentLaneX = lanePositions[currentLaneIndex];
+        
+        if (touchX < currentLaneX && currentLaneIndex > 0) {
+            // Move to the left lane
+            currentLaneIndex--;
+            targetX = lanePositions[currentLaneIndex];
+        } else if (touchX > currentLaneX && currentLaneIndex < lanePositions.length - 1) {
+            // Move to the right lane
+            currentLaneIndex++;
+            targetX = lanePositions[currentLaneIndex];
+        }
+    }
+
+    // Event listeners for touch and mouse
+    gameContainer.addEventListener('mousedown', handleInput);
+    gameContainer.addEventListener('touchstart', handleInput);
+
+    // Restart button event listener
+    restartButton.addEventListener('click', startGame);
+    
+    // Start button listener for the initial click
+    startButton.addEventListener('click', startGame);
+
+    // Initial game setup on load
+    window.onload = function() {
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // This is where we ensure the audio context is running before starting the game.
+        // It should be inside an event listener to be triggered by user interaction.
+        drawInitialScreen(); // Draw initial screen content
+    };
+</script>
+</body>
+</html>
